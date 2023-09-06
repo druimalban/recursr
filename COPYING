@@ -1,0 +1,19 @@
+The R/free.R and R/cofree.R files are translated from the Haskell free package.
+
+These were originally licensed under a BSD 3-clause license, the copyright
+notice of which is reproduced in LICENSE.free.
+
+--------------------------------------------------------------------------------
+
+R/fold.R and R/unfold.R are largely translated from the Haskell
+recursion-schemes package.
+
+Similarly, the concept of a base functor and the project/embed functions in
+R/recursive.R are derived from the recursion-schemes package.
+
+These were originally licensed under a BSD 2-clause license, the copyright
+notice of which is reproduced in LICENSE.recursion-schemes.
+
+--------------------------------------------------------------------------------
+
+This port as a whole is licensed under a BSD 2-clause license.

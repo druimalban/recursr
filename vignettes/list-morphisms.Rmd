@@ -1,0 +1,288 @@
+---
+title: "Morphisms for a list"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{list-morphisms}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message=F, warning=F}
+library(recursr)
+```
+
+# Folds
+## Catamorphism
+
+The catamorphism is a universal abstraction for tearing down a functor structure.
+
+With simple recursion is feasible to print a list as follows:
+
+```{r p1pt1rec}
+printListSimple <- function (lst) {
+    if (length (lst) == 0)
+        return ("nil")
+    else {
+        topNode  = lst[[1]]
+        allNodes = lst[-1]
+
+        return (paste (topNode, ": ", printListSimple (allNodes), sep=''))
+    }
+}
+
+printListSimple (as.list (1:10))
+```
+
+This can be rewritten with a catamorphism:
+
+```{r p1p2cata}
+printListCata <- function (lst) {
+    alg = function (l) {
+        if (is.NilF (l))
+            return ("nil") 
+        else if (is.ConsF (l))
+            return (paste (l$attr, ": ", l$carrier, sep='', collapse=''))
+    }
+    return (cata (alg, lst))
+}
+
+printListCata (as.list (1:10))
+```
+
+## Paramorphism
+
+The paramorphism is a variant of the catamorphism, one which provides access to
+the current sub-structure at any given point. The algebra needs to interpret
+tuples in the carrier type.
+
+The following function appends the size of the sub-structure to the end of each 
+list element:
+
+```{r p1p3para}
+printIndent <- function (lst) {
+    alg = function (l) {
+        if (is.NilF (l))
+            return (list())
+        else {
+            x  = l$attr
+            xs = l$carrier
+            xsa = first (xs)
+            xsc = second (xs)
+
+            indent = replicate (length (xsa), '>')
+            pasted = paste (indent, sep='', collapse='')
+            
+            return (append (xsc
+                          , paste (x, pasted, sep='')
+                          , after=0))
+        }
+    }
+    return (para (alg, lst))
+}
+
+printIndent (list (1,2,3,4))
+```
+
+## Histomorphism
+
+The histomorphism goes further still by providing access to all previous values
+in the recursion. These are stored in a structure provided by cofree, embedded
+throughout the list base functor's carrier.
+
+The following function skips over elements at even indices. This function is from https://jtobin.io/time-traveling-recursion.
+
+```{r p1p4histo}
+currElement <- function (l)
+    return (l$attr)
+
+peelBack <- function (l)
+    return (l$carrier)
+
+oddIndices <- function (lst) {
+    alg = function (l) {
+        if (is.NilF (l))
+            return (list())
+        else {
+            h0  = currElement (l)
+            cf0 = peelBack (l)
+            xs0 = peelBack (cf0)
+
+            if (is.NilF (xs0))
+                return (list (h0))
+            else {
+                h1  = currElement (xs0)
+                cf1 = peelBack (xs0)
+                t1  = currElement (cf1)
+
+                return (c(h0, t1))
+            }      
+        }
+    }
+    return (histo (alg, lst))
+}
+
+oddIndices (as.list (1:10))
+```
+
+# Unfolds
+## Anamorphism
+
+The anamorphism is the categorical dual of the catamorphism. It unfolds a 
+structure into a list, rather than folding a list structure into something else,
+i.e. it builds up a structure rather than tearing it down like the catamorphism
+does.
+
+The following functions are the equivalent of `as.list(unlist(recursive=T))`. 
+They build up a simple list from a more complex structure, in this case a list 
+of lists. Compare the lack of recursive calls in the latter, to the former.
+
+```{r p2p1rec}
+collapseListsSimple <- function (lst) {
+    if (length (lst) == 0)
+        return (list ())
+    else {
+        x  = lst[[1]]
+        xs = lst[-1]
+        
+        if (is.list (x) && length (xs) == 0)
+            collapseListsSimple (x)
+        else if (!is.list (x) && length (xs) == 0)
+            list (x)
+        else if (is.list (x) && length (xs) > 0)
+            c (collapseListsSimple (x), collapseListsSimple (xs))
+        else if (!is.list (x) && length (xs) > 0)
+            append (collapseListsSimple (xs), x, after=0)
+    }
+}
+
+collapseListsSimple (list(list(1,2,3),list(4,5,6),list(list(7,8),9,list(10,11))))
+```
+
+```{r p2p2ana}
+collapseListsAna <- function (lst) {
+    coalg = function (x) {
+        if (length (x) == 0)
+            return (NilF())
+        else {
+            x_ = x[[1]]
+            xs = x[-1]
+
+            if (length (xs) == 0)
+                 ConsF (x_, list())
+            else if (length (xs) == 1)
+                 ConsF (x_, xs[[1]])
+            else ConsF (x_, xs)
+        }
+    }
+    return (ana (coalg, lst))
+}
+
+collapseListsAna (list(list(1,2,3),list(4,5,6),list(list(7,8),9,list(10,11))))
+```
+
+## Apomorphism
+
+The apomorphism is the categorical dual of the paramorphism. It allows the 
+recursion to be terminated at any point.
+
+The following function is an implementation of the tails function. This function
+is designed returns a list of the tails of a given list as the apomorphism 
+traverses the list structure.
+
+Note the use of `Left()` and `Right()`. If a `Left` value is provided, the 
+paramorphism will just return whatever value is in there, i.e. we've stopped
+recursion. If a `Right` value is provided, recursion continues.
+
+```{r p2p2apo}
+tailsApo <- function (lst) {
+    coalg = function (a) {
+        projected = project (a)
+        if (is.NilF (projected))
+            ConsF (list (list ()), Left (list ()))
+        else {
+            xs = projected$carrier
+            ConsF (list (a), Right (xs))
+        }
+    }
+    apo (coalg, lst)
+}
+
+tailsApo (list (1,0,2,4,3))
+```
+
+It's not very useful here, but the function doesn't have to stop on the empty 
+list. It can stop on arbitrary leading values, e.g. zero:
+
+```{r p2p3apo}
+tailsApoZero <- function (lst) {
+    coalg = function (a) {
+        projected = project (a)
+        
+        if (projected$attr == 0)
+            ConsF (list (a), Left (list()))
+        else if (is.NilF (projected))
+            ConsF (list (list ()), Left (list ()))
+        else {
+            xs = projected$carrier
+            ConsF (list (a), Right (xs))
+        }
+    }
+    apo (coalg, lst)
+}
+
+tailsApoZero (list (1,0,2,4,3))
+```
+
+## Futumorphism
+
+The futumorphism is the categorical dual of the histomorphism. Instead of access
+to previously-computed answers, the futumorphism provides access to values yet 
+to be computed.
+
+An implementation of the exchange function is given. This example as usually
+implemented swaps pairs. This example instead swaps sets of three as it shows
+better how to access the 'future' values. R lacks the pattern matching which
+Haskell has; as such the Haskell equivalent is much more succint.
+
+```{r p2p3futu}
+exchange <- function (lst) {    
+    coalg = function (a) {
+        projected = project (a)
+        
+        if (is.NilF (projected))
+            return (NilF())
+        else {
+            x = projected$attr
+            k = projected$carrier
+            projected_ = project (k)
+  
+            if (is.NilF (projected_))
+                return (ConsF (x, liftF (NilF())))
+            else {
+                x_ = projected_$attr
+                k_ = projected_$carrier
+                projected__ = project (k_)
+                
+                if (is.NilF (projected__))
+                    return (ConsF (x_, liftF (ConsF (x, k_))))
+                else {
+                    x__ = projected__$attr
+                    k__ = projected__$carrier
+                    
+                    return (ConsF (x__, Free (ConsF (x_, liftF (ConsF (x, k__))))))
+                }
+            }
+        }
+    }
+    futu (coalg, lst)
+}
+
+exchange (as.list (1:9))
+```
