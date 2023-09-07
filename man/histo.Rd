@@ -14,27 +14,3 @@ histo(alg, expr)
 \description{
 The histomorphism
 }
-\examples{
-oddIndices <- function (lst) {
-  alg = function (l) {
-    if (is.NilF (l))
-      return (list())
-    else {
-      h0  = l$attr
-      cf0 = l$carrier
-      xs0 = peelBack (l$carrier)
-
-      if (is.NilF (xs0))
-        return (list (h0))
-      else {
-        cf1 = xs0$carrier
-        t1  = currElement (cf1)
-
-        return (c(h0, t1))
-      }
-    }
-  }
-  return (histo (alg, lst))
-}
-
-}

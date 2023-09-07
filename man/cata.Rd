@@ -14,18 +14,3 @@ cata(alg, expr)
 \description{
 The catamorphism
 }
-\examples{
-len <- function (lst) {
-  ln = function (st) {
-    if (is.NilF (st)) {
-      return (0)
-    }
-    else if (is.ConsF (st)) {
-      return (1 + st$carrier)
-    }
-  }
-  return (cata (ln, lst))
-}
-len (list (1,2,3,4))
-
-}

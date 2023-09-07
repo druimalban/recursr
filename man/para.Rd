@@ -14,21 +14,3 @@ para(alg, expr)
 \description{
 The paramorphism
 }
-\examples{
-tailL <- function (lst) {
-    alg = function (l) {
-        if (is.NilF (l))
-            return (list())
-        else {
-            x  = l$attr
-            xs = l$carrier
-            xsa = first (xs)
-            xsc = second (xs)
-
-            return (xsa)
-        }
-    }
-    return (para (alg, lst))
-}
-
-}
