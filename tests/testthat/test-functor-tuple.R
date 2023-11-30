@@ -1,4 +1,4 @@
-test_that ("Either is a functor", {
+test_that ("Tuple is a functor", {
   f = \(x) x+2
   g = \(x) x+4
   k = Tuple (1,2)
