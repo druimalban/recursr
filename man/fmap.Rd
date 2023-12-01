@@ -7,7 +7,7 @@
 fmap(fnct, ...)
 }
 \arguments{
-\item{fnct}{A functor}
+\item{x}{A functor}
 
 \item{f}{A function to flat-map}
 }
