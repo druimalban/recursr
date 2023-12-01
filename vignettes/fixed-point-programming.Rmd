@@ -1,0 +1,228 @@
+---
+title: "Programming with fixed-points"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{fixed-point-programming}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, warning=FALSE, message=FALSE, echo=FALSE}
+library(recursr)
+```
+
+# Preface
+
+When I was exploring catamorphisms, I originally implemented these using the functions `Fix()` and `unFix()` which behaved like the Haskell counterparts. In contrast, the `recursion-schemes` package implements `project()` and `embed()` functions together, with "base" functors for e.g. lists, with the idea being that the "base" functor represents one layer of recursion. I don't think these names are particularly intuitive, but `project()` is equivalent to `unFix()` as it peels back a layer of recursion, and `embed()` is the equivalent of `Fix()` as applies a layer of recursion. 
+
+I originally followed Mark Seemann's [blog](https://blog.ploeh.dk/2019/05/13/peano-catamorphism/), which in turn uses `Fix()` as in Bartosz Milewski's [article on F-Algebras](https://bartoszmilewski.com/2017/02/28/f-algebras/). Furthermore, a [Haskell Wikibook section](https://en.wikibooks.org/wiki/Haskell/Fix_and_recursion) explores `fix()` and recursion.
+
+# Fixed points
+
+Cheating a bit—`Fix()` just wraps another layer of recursion, it does not have a recursive type signature like the Haskell's `fix()`—I defined the `Fix()` and `unFix()` functions as follows.
+
+```{r defineFixedPoint}
+Fix <- function (expr) {
+    res         = list (type = "Fix", content = expr)
+    class (res) = append (class (res), "fixed.point")
+    return (res)
+}
+
+unFix <- function (fx) {
+    if ("fixed.point" %in% class (fx))
+        return (fx$content)
+}
+
+is.fixed.point <- function (fx) {
+    return ("fixed.point" %in% class (fx))
+}
+```
+
+# Redefining `cata()` and `ana()`
+
+Let's define `cata()` and `ana()` in terms of `unFix()` and `Fix()` (they just slot in).
+
+```{r defineCataAnaFix}
+cata_ <- function (alg, expr)
+    unFix (expr) |> fmap (\(x) cata_ (alg, x)) |> alg ()
+
+ana_ <-  function (coalg, expr)
+    coalg (expr) |> fmap (\(x) ana_ (coalg, x)) |> Fix ()
+```
+
+# Defining Peano natural numbers
+
+The Peano zero is defined, as is the function `Succ()` to wrap it. These are all very straightforward.
+
+```{r definePeanoNumbers}
+Zero <- function () {
+    res         = list (type = "Zero")
+    class (res) = "Natural"
+    return (res)
+}
+Succ <- function (x) {
+    res         = list (type = "Succ", content = x)
+    class (res) = "Natural"
+    return (res)
+}
+
+is.Zero <- function (n) {
+    if ("Natural" %in% class (n))
+        return (n$type == "Zero")
+    else return (FALSE)
+}
+
+is.Succ <- function (n) {
+    if ("Natural" %in% class (n))
+        return (n$type == "Succ")
+    else return (FALSE)
+}
+
+fmap.Natural <- function (st, f) {
+    if (is.Succ (st)) {
+        x  = f (st$content)
+        return (Succ (x))
+    }
+    else if (is.Zero (st))
+        return (st)
+}
+```
+
+# Test data
+
+Now, define some test data, numbers 0-3.
+
+```{r defineTestData}
+zero  = Fix (Zero ())
+one   = Fix (Succ (zero))
+two   = Fix (Succ (one))
+three = Fix (Succ (two))
+```
+
+# Simple recursive functions
+
+Given that  we have the catamorphism, we can just go ahead and define functions which call `cata()` in order to pretty-print and tally up values.
+
+```{r defineSampleFunctions}
+printNats <- function (st) {
+    pn = function (x) {
+        if (is.Zero (x))
+            return ("Zero")
+        else if (is.Succ (x)) {
+            exprStr = paste ("Succeeds (", x$content, ')', sep='')
+            return (exprStr)
+        }
+    }
+    res = cata_ (pn, st)
+    return (res)
+}
+
+tallyNats <- function (st) {
+    tn = function (x) {
+        if (is.Zero (x))
+            return (0)
+        else if (is.Succ (x))
+            return (x$content + 1)
+    }
+    res = cata_ (tn, st)
+    return (res)
+}
+```
+
+Example output: 
+
+```{r evalTestData}
+printNats (zero)
+tallyNats (zero)
+
+printNats (one)
+tallyNats (one)
+
+printNats (two)
+tallyNats (two)
+
+printNats (three)
+tallyNats (three)
+```
+
+# More recursive functions
+
+Following Seemann's blog post linked earlier, we can define additional functions:
+
+  - `natF()`, which applies a function `f` as many depths as the structure;
+  - `incr()`, which increments a given Peano representations by one;
+  - `add()`, which adds two Peano representations;
+  - `mult()`, which multiplies two Peano representations;
+  - `toNum()`, which "expands" a given Peano expression into an integer representation;
+  - `fromNum()`, which "compresses" a given whole number into a Peano representation.
+  
+```{r defineMoreFunctions}
+natF = function (z, f, expr) {
+    alg = function (x) {
+        if (is.Zero (x))
+            return (z)
+        else if (is.Succ (x)) {
+            pre = x$content
+            return (f (pre))
+        }
+    }
+    return (cata_ (alg, expr))
+}
+
+incr <- function (expr)
+    return (natF (one, \(x) Fix (Succ (x)), expr))
+
+add <- function (ex, ey)
+    return (natF (ey, incr, ex))
+
+mult <- function (ex, ey)
+    return (natF (zero, \(x) add (ey, x), ex))
+
+toNum <- function (expr) {
+    expand = function (st) {
+        if (is.Zero (st))
+            return (0)
+        else if (is.Succ (st)) {
+            return (st$content + 1)
+        }
+    }
+    res = cata_ (expand, expr)
+    return (res)
+}
+
+fromNum <- function (n) {
+    compress = function (x) {
+        if (x == 0)
+            return (Zero ())
+        else if (x > 0)
+            return (Succ (x-1))
+    }
+    res = ana_ (compress, n)
+    return (res)
+}
+```
+
+Example output:
+  
+```{r evalMoreFunctions}
+fromNum (4)  |> printNats ()
+fromNum (32) |> tallyNats ()
+incr (fromNum (4))               |> tallyNats ()
+add  (fromNum (4), fromNum (2))  |> tallyNats ()
+mult (fromNum (4), fromNum (12)) |> tallyNats ()
+```
+
+# Final words
+
+The main draw-back to this approach is that it requires defining recursive 
+fixed point variables, whereas the approach taken by the `recursion-schemes` 
+package with the "base" functors allows for working directly on the structures 
+in question. However, being able to see how `unFix()` and `Fix()` relate to the
+`project()` and `embed()` functions is useful as a learning exercise.

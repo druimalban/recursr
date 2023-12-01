@@ -1,0 +1,457 @@
+---
+title: "Morphisms for a tree"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{tree-morphisms}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, warning=FALSE, message=FALSE, echo=FALSE}
+library(recursr)
+```
+
+# Preface
+
+This vignette is a tutorial which walks through implementation of base functors
+for an existing tree object (`Node`, from `data.tree`), followed by implementing
+a custom `Tree` type which behaves similarly. 
+
+For both types, the tutorial guides building some functions which make use of 
+the morphisms included in the package. However, as will become clear, writing
+unfolds (`apo`, `para`, `futu`) for the `data.tree` `Node` is problematic. 
+A problem does arise in that when adding child nodes which are named the same as
+an existing node in the tree, the behaviour is unpredictable.
+
+Sample code which produces this behaviour will be included in the tutorial,
+and will lead directly on to a custom `Tree` type which, while not as 
+fully-featured as the functionality of `data.tree`, does behave predictably with
+duplicate nodes.
+
+# The `data.tree` `Node` type
+## Defining flat-map
+
+```{r initNode}
+library (data.tree)
+
+fmap.Node <- function (tr, f) {
+    working = Clone (tr, attributes=F)
+
+    traversal = Traverse (working)
+    Do (traversal, function(node) node$name <- f (node$name))
+    
+    return (working)
+}
+```
+
+Let's start by implementing flat-map for the `data.tree` `Node` object.
+Confusingly, referencing a `data.tree` object with a new variable also
+affects the original object. We need to clone the object, which is not very 
+efficient, but fine for this example, which always returns a new object without
+affecting the original.
+
+## Defining the "base" functor
+
+```{r initNodeF}
+NodeF <- function (r, l) {
+    res         = list (type = "NodeF", root=r, forest=l)
+    class (res) = "NodeF"
+    return (res)
+}
+is.NodeF <- function (trf) {
+    return ("NodeF" %in% class (l))
+}
+fmap.NodeF <- function (nf, f) {
+    if (length (nf$forest) == 0)
+        return (NodeF (nf$root, list()))
+    else
+        return (NodeF (nf$root, fmap (nf$forest, f)))
+}
+```
+
+The "base" functor of a `Node` object has a label/attribute type called root 
+and a carrier type called forest. 
+The flat-map function acts on the carrier type, *unless* the forest is
+empty (we've hit a 'leaf') in which case it acts on the attribute type.
+
+## Translating between the functor and its "base" functor
+
+We need two functions which unwrap and wrap a level of recursion, respectively.
+The `project` function will take a `Node` and "project" one layer of it onto the
+"base" functor, and the `embed` function will take a `Node` "base" functor and
+"embed" one layer of it in a tree structure.
+
+The `project` function for a `Node` object is as follows:
+
+```{r projectEmbed}
+project.Node <- function (node)
+    return (NodeF (node$name, node$children))
+```
+
+In contrast, the writing an `embed()` function ends up being problematic 
+because of the behaviour of `Node$AddChildNode` with duplicated nodes, 
+but assuming that no duplicates are extant, the following function works:
+
+```{r embedNodeF}
+embed.NodeF <- function (nf) {
+    if (length (nf$forest) == 0)
+        return (Node$new (nf$root))
+    else {
+        staging = Node$new (nf$root)
+        lapply (nf$forest, staging$AddChildNode)
+        return (staging)
+    }
+}
+```
+
+## Conversion to a list of lists and vice versa
+
+The `data.tree` package includes the functions `ToListSimple` and
+`FromListSimple`. 
+This example uses the `acme` example in the package vignette as it contains no 
+duplicate nodes, converts it to a list of lists, and then 
+demonstrates use of cata and ana to convert between a list of lists and our own
+Tree type. 
+
+Note that these functions assume that there is only one label as in the vignette
+example. In `data.tree`, it is actually possible to have an arbitrary number of
+labels, although they aren't displayed by the default printing function.
+
+Here is some sample data as given by the `data.tree` [introduction](https://cran.r-project.org/web/packages/data.tree/vignettes/data.tree.html):
+
+```{r genAcme}
+library (data.tree)
+
+acme <- Node$new("Acme Inc.")
+  accounting <- acme$AddChild("Accounting")
+    software <- accounting$AddChild("New Software")
+    standards <- accounting$AddChild("New Accounting Standards")
+  research <- acme$AddChild("Research")
+    newProductLine <- research$AddChild("New Product Line")
+    newLabs <- research$AddChild("New Labs")
+  it <- acme$AddChild("IT")
+    outsource <- it$AddChild("Outsource")
+    agile <- it$AddChild("Go agile")
+    goToR <- it$AddChild("Switch to R")
+    
+acme
+```
+
+Now that we have a list of lists to work with, we can use `ana` to build up a 
+`Node` structure, and `cata` to tear it back down:
+
+```{r fnl}
+fromNestedList <- function (lst) {
+    fromNested = function (nl) {
+        NodeF (nl$name, nl[-1])
+    }
+    ana (fromNested, lst)
+}
+
+toNestedList <- function (node) {
+    toNested = function (nf) {
+        branch = list (name = nf$root)
+        return (append (branch, nf$forest))
+    }
+    cata (toNested, node)
+}
+```
+
+We can now combine the two to get the same result as we put in:
+
+```{r combineRes}
+acme |> ToListSimple () |> fromNestedList () |> toNestedList () |> FromListSimple ()
+```
+
+## Pretty-printing trees
+
+The following example is based on the one from [Stack Overflow](https://stackoverflow.com/questions/12556469/nicely-printing-showing-a-binary-tree-in-haskell/19442407#19442407), although it generalises to non-binary trees.
+
+```{r naiveDrawTree}
+drawTree <- function (tree) {
+    pad = function (body, final, l) {
+        if (length (l) == 0)
+            return (list())
+        else if (length (l) == 1)
+            return (list (paste (body, l[[1]], sep='')))
+        else {
+            firstPortion = l[[1]]
+            lastPortion  = l[2:length(l)]
+
+            res = append (list (paste (body, firstPortion, collapse='', sep=''))
+                        , lapply (lastPortion, \(x) paste (final, x, sep='')))
+            return (res)
+        }
+    }
+
+    prettyPrintHelper <- function (br) {
+        if (length (br$forest) == 0)
+            return (list (br$root))
+        else
+            return (append (list (br$root), prettyPrintForest (br)))
+    }
+    prettyPrintForest <- function (br) {
+        forest = br$forest
+        forlen = length (forest)
+
+        if (forlen == 1)
+            return (pad ("┗━ ", "   ", prettyPrintHelper (forest[[1]])))
+        else {
+            padding1 = lapply (forest[1:(forlen-1)]
+                             , \(x) pad ("┣━ ", "┃  ", prettyPrintHelper (x)))
+            padding2 = pad ("┗━ ", "   ", prettyPrintHelper (forest[[forlen]]))
+
+            return (append (padding1, padding2))
+        }
+    }
+    cat (paste (as.list (unlist (prettyPrintHelper (tree), recursive=F))
+              , collapse="\n", sep='')
+       , '\n')
+}
+```
+
+The main advantage of using `cata`, as follows, is being able to reduce 
+recursive calls of `prettyPrintForest()` and `prettyPrintHelper()`, which,
+confusingly, call each other. 
+Otherwise, the function which follows is still fairly complicated. 
+Given that `apo` gives access to level information, and `histo` gives access to 
+past results, it should be feasible to write a function which makes use of these.
+
+```{r betterDrawTree}
+drawTreeCata <- function (tree) {
+    pad = function (body, final, l) {
+        if (length (l) == 0)
+            return (list())
+        else if (length (l) == 1)
+            return (list (paste (body, l[[1]], sep='')))
+        else
+            return (append (list (paste (body, l[[1]], collapse='', sep=''))
+                          , lapply (l[2:length(l)], \(x) paste (final, x, sep=''))))
+    }
+    prettyPrint <- function (br) {
+        if (length (br$forest) == 0)
+            return (list (br$root))
+        else if (length (br$forest) == 1)
+            return (append (pad ("┗━ ", "   ", br$forest), br$root, after = 0))
+        else {
+            forest = br$forest
+            forlen = length (forest)
+            
+            padding1 = lapply (forest[1:forlen-1], \(x) pad ("┣━ ", "┃  ", x))
+            padding2 = pad ("┗━ ", "   ", forest[[forlen]])
+            padding = append (padding1, padding2)
+            
+            return (append (padding, br$root, after = 0))
+        }
+    }
+    res = cata (prettyPrint, tree)
+    cat (paste (purrr::flatten (res), collapse='\n', sep=''), '\n')
+}
+
+acme |> ToListSimple () |> fromNestedList () |> drawTreeCata ()
+```
+
+## Tripping up `data.tree`
+
+While the above examples work fine, it's fairly trivial to trip `data.tree` up.
+The expected behaviour is to add another, identical sub-tree, 
+called "rabbit family", but the sub-trees end up getting mixed, or lost.
+
+```{r genDups}
+dups <- Node$new("rabbit warren")
+  family1 <- dups$AddChild ("rabbit family")
+    rabbit1.1 <- family1$AddChild ("rabbit matriarch")
+    rabbit1.2 <- family1$AddChild ("rabbit baby")
+    rabbit1.3 <- family1$AddChild ("rabbit engineer")
+  family2 <- dups$AddChild ("rabbit family")
+    rabbit2.1 <- family2$AddChild ("rabbit matriarch")
+    rabbit2.2 <- family2$AddChild ("rabbit scout")
+    rabbit2.3 <- family2$AddChild ("rabbit professor")
+  family3 <- dups$AddChild ("solitary pair of hares")
+    hare1 <- family3$AddChild ("solitary hare #1")
+  family4 <- dups$AddChild ("solitary hare #2")
+  family5 <- dups$AddChild ("solitary hare #2")
+
+dups
+```
+
+# A custom `Tree` type
+## Defining a custom `Tree` type
+
+Since we're not using an existing type, we need to define functions which generate the new S3 type `Tree`, and a flat-map implementation.
+
+```{r custTree}
+Tree <- function (r, l) {
+    res         = list (type = "Tree", root=r, forest=l)
+    class (res) = "Tree"
+    return (res)
+}
+is.Tree <- function (x) {
+    return ("Tree" %in% class (x))
+}
+
+fmap.Tree <- function (tr, f) {
+    if (length (tr$forest) == 0)
+        return (Tree (f (tr$root), list()))
+    else {
+        newForest = fmap (tr$forest, \(x) fmap.Tree (x, f))
+        return (Tree (f (tr$root), newForest))
+    }
+}
+```
+
+## Defining the "base" functor
+
+Now, define `TreeF`, the "base" functor of `Tree`. This is near-identical to `NodeF`, which will come in handy later.
+
+```{r custTreeF}
+TreeF <- function (r, l) {
+    res         = list (type = "TreeF", root=r, forest=l)
+    class (res) = "TreeF"
+    return (res)
+}
+
+is.TreeF <- function (trf) {
+    return ("TreeF" %in% class (l))
+}
+
+fmap.TreeF <- function (trf, f) {
+    if (length (trf$forest) == 0)
+        return (TreeF (trf$root, list()))
+    else
+        return (TreeF (trf$root, fmap (trf$forest, f)))
+}
+```
+
+## Translating between the functor and its "base" functor
+
+Now, define `project()` and `embed()` for `TreeF` and `Tree`.
+
+```{r custTreeProjEmbed}
+project.Tree <- function (tr) {
+    return (TreeF (tr$root, tr$forest))
+}
+embed.TreeF <- function (trf) {
+    return (Tree (trf$root, trf$forest))
+}
+```
+
+## Redefining the `fromNestedList()` function
+
+Recall that the "base" functor of our new `Tree` type is near-identical to the
+"base" functor of the `data.tree` `Node` type. 
+Both `NodeF` and `TreeF` are S3 objects which are fundamentally a list with 
+`$carrier` and `$forest` attributes. 
+Therefore, it should be sufficient just to redefine `fromNestedList()`, the only 
+change of which is returning `TreeF` as opposed to `NodeF`. 
+Indeed, it should be possible to call `drawTreeCata()` directly on a `Tree` 
+object.
+
+```{r fnl2}
+fromNestedList_ <- function (lst) {
+    fromNested = function (nl) {
+        TreeF (nl$name, nl[-1])
+    }
+    ana (fromNested, lst)
+}
+
+acme |> ToListSimple () |> fromNestedList_ () |> drawTreeCata ()
+```
+
+## Implementing a monad instance
+
+As a bonus, we can also define a monad instance for the new `Tree` type.
+
+```{r custTreeBind}
+bind.Tree <- function (tr, f) {
+    x   = tr$root
+    txs = tr$forest
+    
+    k = f(x)
+    y   = k$root
+    tys = k$forest
+    p = lapply (txs, \(a) a %>>=% f)
+    return (Tree (y, c(tys, p)))
+}
+```
+
+Let's check the monad laws, which can be summarised as follows:
+
+1. Left identity:
+```
+    return >=> h ≡ h
+```
+2. Right identity:
+```
+    f >=> return ≡ f
+```
+3. Associativity:
+```
+    (f >=> g) >=> h ≡ f >=> (g >=> h)
+```
+
+First, define the equivalent of Haskell's `return()`, which I've called `escape`:
+
+```{r custTreeMonadLaws}
+escape.Tree <- function (x)
+    return (Tree (x, list()))
+
+f <- function (x)
+    return (Tree (x+2, list (escape.Tree (x+3), escape.Tree (x+4))))
+g <- function (x)
+    return (Tree (x+4, list ()))
+```
+
+Now, implement the laws above in code:
+
+```{r custTreeEvalMonadLaws}
+leftIdentityLHS <- escape.Tree (3) %>>=% f
+leftIdentityRHS <- f (3)
+
+rightIdentityLHS <- f (3) %>>=% escape.Tree
+rightIdentityRHS <- f (3)
+
+associativityTestTree <- Tree (3, list (
+                           Tree (4, list())
+                         , Tree (5, list(Tree (6, list()), Tree (7, list())))
+                         ))
+associativityLHS <- (associativityTestTree %>>=% f) %>>=% g
+associativityRHS <- associativityTestTree %>>=% (\(x) f(x) %>>=% g)
+```
+
+Evaluate equivalence by drawing the trees to the terminal:
+
+```{r custTreeLIdent}
+leftIdentityLHS |> drawTreeCata ()
+leftIdentityRHS |> drawTreeCata ()
+```
+```{r custTreeRIdent}
+rightIdentityLHS |> drawTreeCata ()
+rightIdentityRHS |> drawTreeCata ()
+```
+```{r custTreeAssoc}
+associativityLHS |> drawTreeCata ()
+associativityRHS |> drawTreeCata ()
+```
+It looks like our type satisfies the monad laws. However, implementing this as a
+unit test, as for the list type, is non-trivial, as R has no way to know that
+two `Tree` objects are equal. Writing a function to compare the structure / node
+values could enable formally testing equality of the above LHS/RHS trees.
+
+Anyway, implementing bind enables neat operations like the following:
+
+```{r custTreeBindTest}
+acme_ <- acme |> ToListSimple () |> fromNestedList_ ()
+
+treeToUpper <- purrr::compose (escape.Tree, toupper)
+
+acme_ %>>=% treeToUpper |> drawTreeCata ()
+```
+
