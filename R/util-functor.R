@@ -19,7 +19,7 @@ fmap <- function (fnct, ...)
 
 #' Infix flat-map
 #' @param f A function to flat-map
-#' #' @param fnct A functor
+#' @param fnct A functor
 #' @export
 `%<$>%` <- function (f, fnct)
     fmap (fnct, f)

@@ -7,8 +7,9 @@
 f \%<$>\% fnct
 }
 \arguments{
-\item{f}{A function to flat-map
-#' @param fnct A functor}
+\item{f}{A function to flat-map}
+
+\item{fnct}{A functor}
 }
 \description{
 Infix flat-map

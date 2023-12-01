@@ -1,11 +1,11 @@
 Package: recursr
 Title: Generalised Folds and Unfolds for R
-Version: 0.0.0.1
+Version: 0.1
 Authors@R: 
     person("D", "Guthrie", , "dguthrie@posteo.net", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
 Description: Demo port of Haskell recursion-schemes to R
-License: `packager::use_bsd2clause_license`
+License: BSD_2_clause + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
@@ -16,6 +16,7 @@ Imports:
 Suggests: 
     knitr,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    data.tree
 VignetteBuilder: knitr
 Config/testthat/edition: 3

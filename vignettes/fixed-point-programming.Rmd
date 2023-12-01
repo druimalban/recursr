@@ -22,11 +22,11 @@ library(recursr)
 
 When I was exploring catamorphisms, I originally implemented these using the functions `Fix()` and `unFix()` which behaved like the Haskell counterparts. In contrast, the `recursion-schemes` package implements `project()` and `embed()` functions together, with "base" functors for e.g. lists, with the idea being that the "base" functor represents one layer of recursion. I don't think these names are particularly intuitive, but `project()` is equivalent to `unFix()` as it peels back a layer of recursion, and `embed()` is the equivalent of `Fix()` as applies a layer of recursion. 
 
-I originally followed Mark Seemann's [blog](https://blog.ploeh.dk/2019/05/13/peano-catamorphism/), which in turn uses `Fix()` as in Bartosz Milewski's [article on F-Algebras](https://bartoszmilewski.com/2017/02/28/f-algebras/). Furthermore, a [Haskell Wikibook section](https://en.wikibooks.org/wiki/Haskell/Fix_and_recursion) explores `fix()` and recursion.
+I originally followed Mark Seemann's [blog](https://blog.ploeh.dk/2019/05/13/peano-catamorphism/), which in turn uses `Fix` as in Bartosz Milewski's [article on F-Algebras](https://bartoszmilewski.com/2017/02/28/f-algebras/). Furthermore, a [Haskell Wikibook section](https://en.wikibooks.org/wiki/Haskell/Fix_and_recursion) explores Haskell's `fix` and recursion.
 
 # Fixed points
 
-Cheating a bit—`Fix()` just wraps another layer of recursion, it does not have a recursive type signature like the Haskell's `fix()`—I defined the `Fix()` and `unFix()` functions as follows.
+Cheating a bit—`Fix()` just wraps another layer of recursion, it does not have a recursive type signature like Haskell's `fix`—I defined the `Fix()` and `unFix()` functions as follows.
 
 ```{r defineFixedPoint}
 Fix <- function (expr) {

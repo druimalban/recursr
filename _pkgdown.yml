@@ -1,0 +1,11 @@
+url: ~
+template:
+  bootstrap: 5
+articles:
+- title: Tutorial articles (vignettes)
+  navbar: ~
+  contents:
+  - list-morphisms
+  - tree-morphisms
+  - fixed-point-programming
+
