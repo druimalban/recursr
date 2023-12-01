@@ -11,15 +11,15 @@
 #' In contrast, the infix operator `%<$>%` works as in Haskell as this is more
 #' natural.
 #'
-#' @param fnct A functor
+#' @param x A functor
 #' @param f A function to flat-map
 #' @export
 fmap <- function (fnct, ...)
-  UseMethod("fmap", fnct)
+    UseMethod ("fmap", fnct)
 
 #' Infix flat-map
 #' @param f A function to flat-map
 #' #' @param fnct A functor
 #' @export
 `%<$>%` <- function (f, fnct)
-  fmap (fnct, f)
+    fmap (fnct, f)

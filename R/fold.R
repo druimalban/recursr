@@ -4,7 +4,7 @@
 #' @param expr An initial expression
 #' @export
 cata <- function (alg, expr)
-  project (expr) |> fmap (\(x) cata (alg, x)) |> alg ()
+    project (expr) |> fmap (\(x) cata (alg, x)) |> alg ()
 
 #' The paramorphism
 #'
@@ -23,19 +23,19 @@ para <- function (alg, expr) {
 #' @param expr An initial expression
 #' @export
 histo <- function (alg, expr) {
-  mkTuple = function (a)
-    return (Tuple (alg (a), identity (a)))
-  mkAttr = function (t) {
-    a = first  (t)
-    b = second (t)
-    return (Cofree (a, b))
-  }
-  worker = function (k) {
-    project (k) |>
-      fmap (worker) |>
-      mkTuple () |>
-      mkAttr ()
-  }
-
-  worker (expr) |> extract.cofree.comonad ()
+    mkTuple = function (a)
+        return (Tuple (alg (a), identity (a)))
+    mkAttr = function (t) {
+        a = first  (t)
+        b = second (t)
+        return (Cofree (a, b))
+    }
+    worker = function (k) {
+        project (k) |>
+            fmap (worker) |>
+            mkTuple () |>
+            mkAttr ()
+    }
+  
+    worker (expr) |> extract.cofree.comonad ()
 }
