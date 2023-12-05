@@ -3,20 +3,22 @@ Full package documentation is [hosted on Github pages](https://druimalban.github
 # Generalised folds and unfolds for R
 ## Preface
 
-This is an experiment in porting the Haskell recursion-schemes package to R. 
+This is an experiment in porting the Haskell
+[`recursion-schemes`](https://hackage.haskell.org/package/recursion-schemes)
+package to R.
 
-These are generalised fold and unfolding functions, which can be applied to a
-large number of data structures.
-
-This package includes just enough of the Haskell language infrastructure to make
-it possible to use the following recursion schemes:
+The library provides generalised folding and unfolding functions, which can be
+applied to a large number of data structures. The library provides just enough
+of the Haskell language infrastructure to make it possible to use the following
+higher-order functions:
 
   - The catamorphism and its categorical dual the anamorphism
   - The paramorphism and its categorical dual the apomorphism
   - The histomorphism and its categorical dual the futumorphism
   
-Refolds like the hylomorphism are not implemented, but it should be possible to
-implement them using these building blocks.
+Refolds like the hylomorphism are not implemented, but using building-blocks
+and the examples of the code provided, it should be feasible to
+implement these.
 
 ## Tutorial articles (vignettes) and package license
 
@@ -42,14 +44,14 @@ functions, and also adapted the "base" functor of a list to demonstrate the
 package, so this library is to an extent adapted from the Haskell
 `recursion-schemes` package. It isn't clear to me what the implications are in
 terms of software licensing when adapting code/ideas (other libraries which 
-implement recursion-schemes such as SCALA's `matryoshka` don't share the same
-license as `recursion-schemes`), so I've applied the same license (BSD 2-Clause) 
-with a note of attribution. My own code is licensed under BSD 2-Clause.
+implement recursion-schemes such as SCALA's
+[`matryoshka`](https://github.com/precog/matryoshka/tree/master)
+don't share the same license as `recursion-schemes`), so I've applied the same
+license (BSD 2-Clause) with a note of attribution. My own code is licensed under
+BSD 2-Clause.
 
 ## Recursion schemes
   
-This package does not explain what the different recursion schemes actually are,
-because I think others have done it better than me.
 My initial explorations of catamorphisms and anamorphisms was largely inspired
 by the following, excellent, series of blog-posts: 
 https://blog.ploeh.dk/2017/10/04/from-design-patterns-to-category-theory/
@@ -61,6 +63,14 @@ Other resources which are fairly accessible include the following:
   - https://blog.sumtypeofway.com/posts/introduction-to-recursion-schemes.html (this is a series)
   - https://fho.f12n.de/posts/2014-05-07-dont-fear-the-cat.html
   - https://arxiv.org/pdf/2202.13633.pdf
+
+I think that others are better able to explain the theory behind the various
+recursion schemes in a more accurate and insightful manner than I can, so the
+function reference tends to be fairly sparse, although every function is
+documented, and the tutorial vignettes describe usage.
+Some of the terminology can also be confusing, and Haskell examples provided by
+others tend to be more succint and clearer than my corresponding implementation
+in R. 
 
 ## Additional features implemented
 
@@ -86,9 +96,15 @@ instances are pretty unintuitive, and there is invariably more than one possible
 Applicative instance, so I've not implemented Applicative for any of the types 
 in this package.
 
-## The R type system (or lack thereof)
+## Miscellaneous remarks
 
-R is not strongly-typed—it will freely coerce values—but the S3 class system
-does at least enable writing functions which are specific to a given 
-functor/monad, e.g. the bind implementation for Either only applies to Either 
-values. 
+Pattern-matching—not supported in base R, and the various libraries do
+not work like in Haskell—would have made many of my R functions much more
+succint.
+
+Type signatures would have been helpful especially when implementing
+building-blocks like flat-map and free/cofree.
+Indeed, R is not strongly-typed—it will freely coerce values—but the S3 class
+system does at least enable writing functions which are specific to a given
+functor/monad, e.g. the bind implementation for Either only applies to Either
+values.
