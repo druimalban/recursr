@@ -58,9 +58,9 @@ either <- function (fl, fr, ex) {
 }
 
 ## Functor
-#' Flat-map over an Either monad
+#' Map over an Either monad
 #' @param x An Either monad
-#' @param f A function to flat-map
+#' @param f A function to map
 #' @export
 fmap.Either <- function (ex, f) {
     if (is.Left (ex))

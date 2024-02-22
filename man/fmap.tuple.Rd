@@ -2,15 +2,15 @@
 % Please edit documentation in R/functor-tuple.R
 \name{fmap.tuple}
 \alias{fmap.tuple}
-\title{Flat-map over a tuple}
+\title{Map over a tuple}
 \usage{
 \method{fmap}{tuple}(t, f)
 }
 \arguments{
 \item{t}{A tuple}
 
-\item{f}{A function to flat-map}
+\item{f}{A function to map}
 }
 \description{
-Flat-map over a tuple
+Map over a tuple
 }

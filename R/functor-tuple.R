@@ -38,9 +38,9 @@ second.tuple <- function (t)
 '==.tuple' <- function (x,y)
   first (x) == first (y) && second (x) == second (y)
 
-#' Flat-map over a tuple
+#' Map over a tuple
 #' @param t A tuple
-#' @param f A function to flat-map
+#' @param f A function to map
 #' @export
 fmap.tuple <- function (t, f) {
   x = first (t)

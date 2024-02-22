@@ -33,9 +33,9 @@ is.ConsF <- function (x) {
 }
 
 ## Functor
-#' Flat-map over a list base functor
+#' Map over a list base functor
 #' @param x A list base functor
-#' @param f A function to flat-map
+#' @param f A function to map
 #' @export
 fmap.ListF <- function (lstf, f) {
     if (is.ConsF (lstf)) {

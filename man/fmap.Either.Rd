@@ -2,15 +2,15 @@
 % Please edit documentation in R/functor-either.R
 \name{fmap.Either}
 \alias{fmap.Either}
-\title{Flat-map over an Either monad}
+\title{Map over an Either monad}
 \usage{
 \method{fmap}{Either}(ex, f)
 }
 \arguments{
-\item{f}{A function to flat-map}
+\item{f}{A function to map}
 
 \item{x}{An Either monad}
 }
 \description{
-Flat-map over an Either monad
+Map over an Either monad
 }

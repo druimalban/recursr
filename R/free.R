@@ -50,9 +50,9 @@ bind.free.monad <- function (fr, f) {
 
 escape.free.monad <- Pure
 
-#' Flat-map over a free monaad
+#' Map over a free monaad
 #' @param fr A free monad
-#' @param f A function to flat-map
+#' @param f A function to map
 #' @export
 fmap.free.monad <- function (fr, f)
     fr %>>=% \(x) escape.free.monad (f (x))

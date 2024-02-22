@@ -1,7 +1,7 @@
-#' Flat-map over a functor
+#' Map over a functor
 #'
 #' @description
-#' flat-map is implemented differently for each functor, with each functor
+#' map is implemented differently for each functor, with each functor
 #' satisfying the functor laws.
 #'
 #' Nonetheless this is set up so that unlike in Haskell, we use `fmap (x, f)`
@@ -12,13 +12,13 @@
 #' natural.
 #'
 #' @param x A functor
-#' @param f A function to flat-map
+#' @param f A function to map
 #' @export
 fmap <- function (fnct, ...)
     UseMethod ("fmap", fnct)
 
-#' Infix flat-map
-#' @param f A function to flat-map
+#' Infix map
+#' @param f A function to map
 #' @param fnct A functor
 #' @export
 `%<$>%` <- function (f, fnct)

@@ -28,7 +28,7 @@ This is primarily a demonstration of each function rather than an explanation of
 how to implement a "base" functor for a given type.
 
 [The second package vignette](https://druimalban.github.io/articles/tree-morphisms.html)
-explores implementation of flat-map for the `data.tree` package's `Node` type,
+explores implementation of fmap for the `data.tree` package's `Node` type,
 implementation of a "base" functor for this type. 
 Because of that package's unpredictable behaviour, the vignette then explores
 implementation of a basic `Tree` type. 
@@ -78,7 +78,7 @@ Futu and histo depend on the free monad and the cofree comonad, and para and apo
 depend on the either monad and tuples. As such, the following language features
 are also implemented:
 
-  - S3 methods for functors (flat-map a.k.a. `fmap()`)
+  - S3 methods for functors (`fmap()`)
   - S3 methods for monads (bind a.k.a. `>>=`, discard a.k.a. `>>`, and `join()`)
   - S3 methods for comonads (`extract()`, `extend()`, and `duplicate()`)
   - Infix pipes which work like the Haskell infix operators, surrounded by percentage signs similar to magrittr pipes
@@ -86,9 +86,9 @@ are also implemented:
 Thus enabling the following:
   
   - The free monad and the cofree comonad
-  - A flat-map and a bind implementation for a list
+  - An fmap and bind implementation for a list
   - "Base" functor for a list, which represents the list functor at a given point in recursion
-  - The Either monad, as well as Tuple, with a flat-map implementation for both and a bind implementation for Either. Not all tuples are monads.
+  - The Either monad, as well as Tuple, with a fmap implementation for both and a bind implementation for Either. Not all tuples are monads.
 
 Note that Haskell has another typeclass, which bears mentioning, Applicative.
 In fact, all monads are applicative functors. However, some Applicative 
@@ -103,7 +103,7 @@ not work like in Haskell—would have made many of my R functions much more
 succint.
 
 Type signatures would have been helpful especially when implementing
-building-blocks like flat-map and free/cofree.
+building-blocks like fmap and free/cofree.
 Indeed, R is not strongly-typed—it will freely coerce values—but the S3 class
 system does at least enable writing functions which are specific to a given
 functor/monad, e.g. the bind implementation for Either only applies to Either

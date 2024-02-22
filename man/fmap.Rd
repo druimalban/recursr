@@ -2,17 +2,17 @@
 % Please edit documentation in R/util-functor.R
 \name{fmap}
 \alias{fmap}
-\title{Flat-map over a functor}
+\title{Map over a functor}
 \usage{
 fmap(fnct, ...)
 }
 \arguments{
 \item{x}{A functor}
 
-\item{f}{A function to flat-map}
+\item{f}{A function to map}
 }
 \description{
-flat-map is implemented differently for each functor, with each functor
+map is implemented differently for each functor, with each functor
 satisfying the functor laws.
 
 Nonetheless this is set up so that unlike in Haskell, we use \code{fmap (x, f)}

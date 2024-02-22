@@ -2,15 +2,15 @@
 % Please edit documentation in R/free.R
 \name{fmap.free.monad}
 \alias{fmap.free.monad}
-\title{Flat-map over a free monaad}
+\title{Map over a free monaad}
 \usage{
 \method{fmap}{free.monad}(fr, f)
 }
 \arguments{
 \item{fr}{A free monad}
 
-\item{f}{A function to flat-map}
+\item{f}{A function to map}
 }
 \description{
-Flat-map over a free monaad
+Map over a free monaad
 }

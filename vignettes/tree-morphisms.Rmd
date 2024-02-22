@@ -36,7 +36,7 @@ fully-featured as the functionality of `data.tree`, does behave predictably with
 duplicate nodes.
 
 # The `data.tree` `Node` type
-## Defining flat-map
+## Defining `fmap`
 
 ```{r initNode}
 library (data.tree)
@@ -51,7 +51,7 @@ fmap.Node <- function (tr, f) {
 }
 ```
 
-Let's start by implementing flat-map for the `data.tree` `Node` object.
+Let's start by implementing `fmap` for the `data.tree` `Node` object.
 Confusingly, referencing a `data.tree` object with a new variable also
 affects the original object. We need to clone the object, which is not very 
 efficient, but fine for this example, which always returns a new object without
@@ -78,7 +78,7 @@ fmap.NodeF <- function (nf, f) {
 
 The "base" functor of a `Node` object has a label/attribute type called root 
 and a carrier type called forest. 
-The flat-map function acts on the carrier type, *unless* the forest is
+The `fmap` function acts on the carrier type, *unless* the forest is
 empty (we've hit a 'leaf') in which case it acts on the attribute type.
 
 ## Translating between the functor and its "base" functor
@@ -285,7 +285,7 @@ dups
 # A custom `Tree` type
 ## Defining a custom `Tree` type
 
-Since we're not using an existing type, we need to define functions which generate the new S3 type `Tree`, and a flat-map implementation.
+Since we're not using an existing type, we need to define functions which generate the new S3 type `Tree`, and a `fmap` implementation.
 
 ```{r custTree}
 Tree <- function (r, l) {

@@ -2,15 +2,15 @@
 % Please edit documentation in R/functor-list.R
 \name{fmap.list}
 \alias{fmap.list}
-\title{Flat-map over a list}
+\title{Map over a list}
 \usage{
 \method{fmap}{list}(X, FUN, ...)
 }
 \arguments{
 \item{x}{A list}
 
-\item{f}{A function to flat-map}
+\item{f}{A function to map}
 }
 \description{
-Flat-map over a list
+Map over a list
 }

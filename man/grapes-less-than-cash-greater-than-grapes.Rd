@@ -2,15 +2,15 @@
 % Please edit documentation in R/util-functor.R
 \name{\%<$>\%}
 \alias{\%<$>\%}
-\title{Infix flat-map}
+\title{Infix map}
 \usage{
 f \%<$>\% fnct
 }
 \arguments{
-\item{f}{A function to flat-map}
+\item{f}{A function to map}
 
 \item{fnct}{A functor}
 }
 \description{
-Infix flat-map
+Infix map
 }

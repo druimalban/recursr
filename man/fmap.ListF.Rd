@@ -2,15 +2,15 @@
 % Please edit documentation in R/functor-base-list.R
 \name{fmap.ListF}
 \alias{fmap.ListF}
-\title{Flat-map over a list base functor}
+\title{Map over a list base functor}
 \usage{
 \method{fmap}{ListF}(lstf, f)
 }
 \arguments{
-\item{f}{A function to flat-map}
+\item{f}{A function to map}
 
 \item{x}{A list base functor}
 }
 \description{
-Flat-map over a list base functor
+Map over a list base functor
 }

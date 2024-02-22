@@ -1,7 +1,7 @@
 ## Functor
-#' Flat-map over a list
+#' Map over a list
 #' @param x A list
-#' @param f A function to flat-map
+#' @param f A function to map
 #' @export
 fmap.list <- lapply
 
